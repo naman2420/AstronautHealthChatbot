@@ -8,9 +8,13 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-
 # ─── OpenAI Configuration ───────────────────────────────────────────
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+# Try Streamlit secrets first (for Streamlit Cloud), then fall back to env vars
+try:
+    import streamlit as st
+    OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))
+except Exception:
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 AVAILABLE_MODELS = [
     "gpt-4o",

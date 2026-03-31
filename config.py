@@ -12,7 +12,7 @@ load_dotenv()
 # Try Streamlit secrets first (for Streamlit Cloud), then fall back to env vars
 try:
     import streamlit as st
-    OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))
+    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 except Exception:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 

@@ -147,6 +147,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "explain_data" not in st.session_state:
     st.session_state.explain_data = {}  # msg_index -> explainability dict
+if "pending_question" not in st.session_state:
+    st.session_state.pending_question = None  # For sample question clicks
 
 
 # ─── Sidebar ─────────────────────────────────────────────────────────
@@ -266,17 +268,22 @@ if not st.session_state.messages:
         col = cols[i % 2]
         with col:
             if st.button(f"🔹 {question}", key=f"sample_{i}", use_container_width=True):
-                st.session_state.messages.append({"role": "user", "content": question})
+                st.session_state.pending_question = question
                 st.rerun()
 
 
 # ─── Chat Input ──────────────────────────────────────────────────────
-user_input = st.chat_input("Ask about astronaut health, performance, or space medicine...")
+user_input = st.chat_input("Ask me anything — astronaut health, space science, or general questions...")
+
+# Check if there's a pending sample question from button click
+if st.session_state.pending_question:
+    user_input = st.session_state.pending_question
+    st.session_state.pending_question = None
 
 if user_input:
     # Validate API key
     if not api_key:
-        st.error("⚠️ Please enter your OpenAI API key in the sidebar to continue.")
+        st.error("⚠️ OpenAI API key not found. Please configure it in app settings or Streamlit secrets.")
         st.stop()
 
     # Add user message

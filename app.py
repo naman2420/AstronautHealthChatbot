@@ -17,9 +17,9 @@ from dotenv import load_dotenv
 # ==============================================================================
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
-DEFAULT_MODEL = "gemini-3.8-flash"
+DEFAULT_MODEL = "openrouter/free"
 AVAILABLE_MODELS = [DEFAULT_MODEL]
 
 APP_TITLE = "🚀 AstroHealth AI"
@@ -221,10 +221,10 @@ def format_explainability_text(explain_data: dict) -> str:
 # 4. GRADIO INTERFACE
 # ==============================================================================
 def chat(message: str, history: list, api_key: str, model: str, temperature: float):
-    key = api_key.strip() or GEMINI_API_KEY
+    key = api_key.strip() or OPENROUTER_API_KEY
     if not key:
         return (
-            "⚠️ **Please enter your Gemini API key** in the settings panel above to start chatting.",
+            "⚠️ **Please enter your OpenRouter API key** in the settings panel above to start chatting.",
             "No API key provided.",
         )
 
@@ -241,7 +241,7 @@ def chat(message: str, history: list, api_key: str, model: str, temperature: flo
     messages.append({"role": "user", "content": message})
 
     try:
-        client = OpenAI(api_key=key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+        client = OpenAI(api_key=key, base_url="https://openrouter.ai/api/v1", timeout=30.0, max_retries=0)
         response = client.chat.completions.create(
             model=model,
             messages=messages,
@@ -250,7 +250,7 @@ def chat(message: str, history: list, api_key: str, model: str, temperature: flo
         )
         full_response = response.choices[0].message.content
         if not full_response:
-            raise ValueError("Gemini returned no text. Please retry or check the model settings.")
+            raise ValueError("OpenRouter returned no text. Please retry or check the model settings.")
         explain = parse_explainability(full_response)
         main_answer = extract_main_response(full_response)
         explain_text = format_explainability_text(explain) if explain else "No explainability data in this response."
@@ -274,7 +274,7 @@ def create_gradio_app():
         with gr.Row():
             with gr.Column(scale=1, min_width=280):
                 gr.Markdown("### ⚙️ Settings")
-                api_key_input = gr.Textbox(label="🔑 Gemini API Key", placeholder="Enter your Gemini API key", type="password", value="")
+                api_key_input = gr.Textbox(label="🔑 OpenRouter API Key", placeholder="Enter your OpenRouter API key", type="password", value="")
                 model_dropdown = gr.Dropdown(choices=AVAILABLE_MODELS, value=DEFAULT_MODEL, label="🤖 Model")
                 temp_slider = gr.Slider(minimum=0.0, maximum=1.5, value=0.4, step=0.1, label="🌡️ Temperature")
                 gr.Markdown("---")

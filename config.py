@@ -8,15 +8,15 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-# ─── Gemini Configuration ───────────────────────────────────────────
+# ─── OpenRouter Configuration ───────────────────────────────────────────
 # Try Streamlit secrets first (for Streamlit Cloud), then fall back to env vars
 try:
     import streamlit as st
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
 except Exception:
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
-DEFAULT_MODEL = "gemini-3.8-flash"
+DEFAULT_MODEL = "openrouter/free"
 AVAILABLE_MODELS = [DEFAULT_MODEL]
 
 # ─── Application Settings ───────────────────────────────────────────

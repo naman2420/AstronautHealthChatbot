@@ -12,7 +12,7 @@ from openai import OpenAI
 
 from config import (
     APP_SUBTITLE, AVAILABLE_MODELS, DEFAULT_MODEL,
-    GEMINI_API_KEY, SAMPLE_QUESTIONS, SYSTEM_PROMPT,
+    OPENROUTER_API_KEY, SAMPLE_QUESTIONS, SYSTEM_PROMPT,
 )
 from explainability import (
     extract_main_response, format_explainability_text, parse_explainability,
@@ -36,10 +36,10 @@ def chat(
     Returns (assistant_reply, explainability_text).
     """
     # Validate API key
-    key = api_key.strip() or GEMINI_API_KEY
+    key = api_key.strip() or OPENROUTER_API_KEY
     if not key:
         return (
-            "⚠️ **Please enter your Gemini API key** in the settings panel above to start chatting.",
+            "⚠️ **Please enter your OpenRouter API key** in the settings panel above to start chatting.",
             "No API key provided.",
         )
 
@@ -64,9 +64,9 @@ def chat(
 
     messages.append({"role": "user", "content": message})
 
-    # Call Gemini through the OpenAI-compatible endpoint
+    # Call OpenRouter through the OpenAI-compatible endpoint
     try:
-        client = OpenAI(api_key=key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+        client = OpenAI(api_key=key, base_url="https://openrouter.ai/api/v1", timeout=30.0, max_retries=0)
         response = client.chat.completions.create(
             model=model,
             messages=messages,
@@ -75,7 +75,7 @@ def chat(
         )
         full_response = response.choices[0].message.content
         if not full_response:
-            raise ValueError("Gemini returned no text. Please retry or check the model settings.")
+            raise ValueError("OpenRouter returned no text. Please retry or check the model settings.")
 
         # Parse explainability and clean response
         explain = parse_explainability(full_response)
@@ -166,8 +166,8 @@ def create_gradio_app():
                 gr.Markdown("### ⚙️ Settings")
 
                 api_key_input = gr.Textbox(
-                    label="🔑 Gemini API Key",
-                    placeholder="Enter your Gemini API key",
+                    label="🔑 OpenRouter API Key",
+                    placeholder="Enter your OpenRouter API key",
                     type="password",
                     value="",
                 )

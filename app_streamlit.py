@@ -12,7 +12,7 @@ from openai import OpenAI, APITimeoutError, APIConnectionError, APIStatusError
 
 from config import (
     APP_ICON, APP_SUBTITLE, APP_TITLE, AVAILABLE_MODELS,
-    DEFAULT_MODEL, GEMINI_API_KEY, SAMPLE_QUESTIONS, SYSTEM_PROMPT,
+    DEFAULT_MODEL, OPENROUTER_API_KEY, SAMPLE_QUESTIONS, SYSTEM_PROMPT,
 )
 from explainability import (
     extract_main_response, format_explainability_text,
@@ -154,12 +154,12 @@ if "pending_question" not in st.session_state:
 # ─── Sidebar ─────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown(f"## {APP_ICON} AstroHealth AI")
-    st.caption("v1.1 · Gemini · 30-second request timeout")
+    st.caption("v1.2 · OpenRouter · 30-second request timeout")
 
     st.markdown("---")
 
     # API key loaded from .env or environment variable (not shown in UI)
-    api_key = GEMINI_API_KEY
+    api_key = OPENROUTER_API_KEY
 
     # Model Selection
     st.markdown("### 🤖 Model")
@@ -196,7 +196,7 @@ with st.sidebar:
 
     # Footer
     st.markdown(
-        '<div class="footer">Built with Streamlit + Gemini<br>'
+        '<div class="footer">Built with Streamlit + OpenRouter<br>'
         "Knowledge-Grounded AI Framework</div>",
         unsafe_allow_html=True,
     )
@@ -283,7 +283,7 @@ if st.session_state.pending_question:
 if user_input:
     # Validate API key
     if not api_key:
-        st.error("⚠️ Gemini API key not found. Please configure it in app settings or Streamlit secrets.")
+        st.error("⚠️ OpenRouter API key not found. Please configure it in app settings or Streamlit secrets.")
         st.stop()
 
     # Add user message
@@ -295,7 +295,7 @@ if user_input:
     relevant_knowledge = retrieve_relevant_knowledge(user_input)
     knowledge_context = format_knowledge_context(relevant_knowledge)
 
-    # Build messages for Gemini
+    # Build messages for OpenRouter
     augmented_system = (
         f"{SYSTEM_PROMPT}\n\n"
         f"═══ KNOWLEDGE CONTEXT ═══\n{knowledge_context}\n═══ END CONTEXT ═══"
@@ -308,11 +308,11 @@ if user_input:
     for msg in history_window:
         openai_messages.append({"role": msg["role"], "content": msg["content"]})
 
-    # Call Gemini through the OpenAI-compatible endpoint
+    # Call OpenRouter through the OpenAI-compatible endpoint
     with st.chat_message("assistant", avatar="🧑‍🚀"):
         with st.spinner("🛰️ Processing with AstroHealth AI..."):
             try:
-                client = OpenAI(api_key=api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/", timeout=30.0, max_retries=0)
+                client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1", timeout=30.0, max_retries=0)
                 response = client.chat.completions.create(
                     model=model,
                     messages=openai_messages,
@@ -321,7 +321,7 @@ if user_input:
                 )
                 full_response = response.choices[0].message.content
                 if not full_response:
-                    raise ValueError("Gemini returned no text. Please retry or check the model settings.")
+                    raise ValueError("OpenRouter returned no text. Please retry or check the model settings.")
 
                 # Parse explainability
                 explain = parse_explainability(full_response)
@@ -375,18 +375,19 @@ if user_input:
                                 st.warning(f"⚠️ **Limitations:** {lim}")
 
             except APITimeoutError:
-                st.error("Gemini did not respond within the request timeout. Please retry once. If it continues, check Google AI Studio or contact the app owner.")
+                st.error("OpenRouter did not respond within the request timeout. Please retry once. If it continues, check OpenRouter or contact the app owner.")
             except APIConnectionError:
-                st.error("The app could not connect to Gemini. Please retry after a short wait.")
+                st.error("The app could not connect to OpenRouter. Please retry after a short wait.")
             except APIStatusError as e:
                 guidance = {
-                    400: "Check that the Gemini API key and model are valid for your Google project.",
-                    401: "Check GEMINI_API_KEY in Streamlit Secrets.",
-                    403: "Your Google project may not have permission to use this key or model.",
-                    404: "This model is unavailable. Check the model ID and your project's model access in Google AI Studio.",
-                    429: "Gemini quota or rate limit reached. Check your project's limits in Google AI Studio.",
-                    503: "Gemini is temporarily unavailable. Please retry later.",
-                }.get(e.status_code, "Check Google AI Studio for the request failure.")
-                st.error(f"Gemini returned HTTP {e.status_code}. {guidance}")
+                    400: "Check that the OpenRouter API key and model are valid for your OpenRouter account.",
+                    401: "Check OPENROUTER_API_KEY in Streamlit Secrets.",
+                    402: "OpenRouter rejected the request for insufficient credits. Confirm the selected model is openrouter/free.",
+                    403: "Your OpenRouter account may not have permission to use this key or model.",
+                    404: "This model is unavailable. Check the model ID and your project's model access in OpenRouter.",
+                    429: "OpenRouter quota or rate limit reached. Check your project's limits in OpenRouter.",
+                    503: "OpenRouter is temporarily unavailable. Please retry later.",
+                }.get(e.status_code, "Check OpenRouter for the request failure.")
+                st.error(f"OpenRouter returned HTTP {e.status_code}. {guidance}")
             except Exception as e:
-                st.error(f"❌ Error communicating with Gemini: {str(e).replace(api_key, '[REDACTED]')}")
+                st.error(f"❌ Error communicating with OpenRouter: {str(e).replace(api_key, '[REDACTED]')}")

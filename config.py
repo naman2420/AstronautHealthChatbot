@@ -8,22 +8,16 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-# ─── OpenAI Configuration ───────────────────────────────────────────
+# ─── Gemini Configuration ───────────────────────────────────────────
 # Try Streamlit secrets first (for Streamlit Cloud), then fall back to env vars
 try:
     import streamlit as st
-    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 except Exception:
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-AVAILABLE_MODELS = [
-    "gpt-4o",
-    "gpt-4o-mini",
-    "gpt-4-turbo",
-    "gpt-3.5-turbo",
-]
-
-DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = "gemini-3.8-flash"
+AVAILABLE_MODELS = [DEFAULT_MODEL]
 
 # ─── Application Settings ───────────────────────────────────────────
 APP_TITLE = "🚀 AstroHealth AI"

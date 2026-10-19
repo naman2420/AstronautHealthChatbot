@@ -12,7 +12,7 @@ from openai import OpenAI
 
 from config import (
     APP_SUBTITLE, AVAILABLE_MODELS, DEFAULT_MODEL,
-    OPENAI_API_KEY, SAMPLE_QUESTIONS, SYSTEM_PROMPT,
+    GEMINI_API_KEY, SAMPLE_QUESTIONS, SYSTEM_PROMPT,
 )
 from explainability import (
     extract_main_response, format_explainability_text, parse_explainability,
@@ -36,10 +36,10 @@ def chat(
     Returns (assistant_reply, explainability_text).
     """
     # Validate API key
-    key = api_key.strip() or OPENAI_API_KEY
+    key = api_key.strip() or GEMINI_API_KEY
     if not key:
         return (
-            "⚠️ **Please enter your OpenAI API key** in the settings panel above to start chatting.",
+            "⚠️ **Please enter your Gemini API key** in the settings panel above to start chatting.",
             "No API key provided.",
         )
 
@@ -64,16 +64,18 @@ def chat(
 
     messages.append({"role": "user", "content": message})
 
-    # Call OpenAI
+    # Call Gemini through the OpenAI-compatible endpoint
     try:
-        client = OpenAI(api_key=key)
+        client = OpenAI(api_key=key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
         response = client.chat.completions.create(
             model=model,
             messages=messages,
             temperature=temperature,
-            max_tokens=2000,
+            max_tokens=8192,
         )
         full_response = response.choices[0].message.content
+        if not full_response:
+            raise ValueError("Gemini returned no text. Please retry or check the model settings.")
 
         # Parse explainability and clean response
         explain = parse_explainability(full_response)
@@ -164,10 +166,10 @@ def create_gradio_app():
                 gr.Markdown("### ⚙️ Settings")
 
                 api_key_input = gr.Textbox(
-                    label="🔑 OpenAI API Key",
-                    placeholder="sk-...",
+                    label="🔑 Gemini API Key",
+                    placeholder="Enter your Gemini API key",
                     type="password",
-                    value=OPENAI_API_KEY or "",
+                    value="",
                 )
 
                 model_dropdown = gr.Dropdown(

@@ -12,7 +12,7 @@ from openai import OpenAI
 
 from config import (
     APP_ICON, APP_SUBTITLE, APP_TITLE, AVAILABLE_MODELS,
-    DEFAULT_MODEL, OPENAI_API_KEY, SAMPLE_QUESTIONS, SYSTEM_PROMPT,
+    DEFAULT_MODEL, GEMINI_API_KEY, SAMPLE_QUESTIONS, SYSTEM_PROMPT,
 )
 from explainability import (
     extract_main_response, format_explainability_text,
@@ -159,7 +159,7 @@ with st.sidebar:
     st.markdown("---")
 
     # API key loaded from .env or environment variable (not shown in UI)
-    api_key = OPENAI_API_KEY
+    api_key = GEMINI_API_KEY
 
     # Model Selection
     st.markdown("### 🤖 Model")
@@ -196,7 +196,7 @@ with st.sidebar:
 
     # Footer
     st.markdown(
-        '<div class="footer">Built with Streamlit + OpenAI<br>'
+        '<div class="footer">Built with Streamlit + Gemini<br>'
         "Knowledge-Grounded AI Framework</div>",
         unsafe_allow_html=True,
     )
@@ -283,7 +283,7 @@ if st.session_state.pending_question:
 if user_input:
     # Validate API key
     if not api_key:
-        st.error("⚠️ OpenAI API key not found. Please configure it in app settings or Streamlit secrets.")
+        st.error("⚠️ Gemini API key not found. Please configure it in app settings or Streamlit secrets.")
         st.stop()
 
     # Add user message
@@ -295,7 +295,7 @@ if user_input:
     relevant_knowledge = retrieve_relevant_knowledge(user_input)
     knowledge_context = format_knowledge_context(relevant_knowledge)
 
-    # Build messages for OpenAI
+    # Build messages for Gemini
     augmented_system = (
         f"{SYSTEM_PROMPT}\n\n"
         f"═══ KNOWLEDGE CONTEXT ═══\n{knowledge_context}\n═══ END CONTEXT ═══"
@@ -308,18 +308,20 @@ if user_input:
     for msg in history_window:
         openai_messages.append({"role": msg["role"], "content": msg["content"]})
 
-    # Call OpenAI
+    # Call Gemini through the OpenAI-compatible endpoint
     with st.chat_message("assistant", avatar="🧑‍🚀"):
         with st.spinner("🛰️ Processing with AstroHealth AI..."):
             try:
-                client = OpenAI(api_key=api_key)
+                client = OpenAI(api_key=api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
                 response = client.chat.completions.create(
                     model=model,
                     messages=openai_messages,
                     temperature=temperature,
-                    max_tokens=2000,
+                    max_tokens=8192,
                 )
                 full_response = response.choices[0].message.content
+                if not full_response:
+                    raise ValueError("Gemini returned no text. Please retry or check the model settings.")
 
                 # Parse explainability
                 explain = parse_explainability(full_response)
@@ -373,4 +375,4 @@ if user_input:
                                 st.warning(f"⚠️ **Limitations:** {lim}")
 
             except Exception as e:
-                st.error(f"❌ Error communicating with OpenAI: {str(e)}")
+                st.error(f"❌ Error communicating with Gemini: {str(e)}")

@@ -2,7 +2,7 @@
 
 **Knowledge-Grounded & Explainable AI Framework for Astronaut Health Monitoring and Performance Optimization**
 
-A dual-interface chatbot (Streamlit + Gradio) powered by OpenAI that provides expert-level, explainable answers about astronaut health, space medicine, and crew performance optimization.
+A dual-interface chatbot (Streamlit + Gradio) powered by Gemini that provides expert-level, explainable answers about astronaut health, space medicine, and crew performance optimization.
 
 ---
 
@@ -35,7 +35,7 @@ A dual-interface chatbot (Streamlit + Gradio) powered by OpenAI that provides ex
 ## 📋 Prerequisites
 
 - **Python 3.9+** (recommended: 3.11+)
-- **OpenAI API Key** — Get one at [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+- **Gemini API Key** — Get one at [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 - **pip** (Python package installer)
 
 ---
@@ -73,7 +73,7 @@ pip install -r requirements.txt
 This installs:
 - `streamlit` — Primary chat UI framework
 - `gradio` — Alternative chat UI framework
-- `openai` — OpenAI API client for GPT models
+- `openai` — OpenAI-compatible Python client used to call Gemini
 - `python-dotenv` — Environment variable loading from `.env`
 
 ### Step 4: Configure Your API Key
@@ -82,10 +82,10 @@ This installs:
 
 ```bash
 # Copy the template
-cp .env.example .env
+cp env.example .env
 
 # Edit the .env file and replace the placeholder with your real key:
-# OPENAI_API_KEY=sk-your-actual-api-key-here
+# GEMINI_API_KEY=your-gemini-api-key-here
 ```
 
 **Option B** — Enter it directly in the app sidebar when running (no `.env` needed).
@@ -118,7 +118,7 @@ This will:
 ## 🎯 How to Use
 
 1. **Enter your API key** (if not configured via `.env`) in the sidebar/settings panel
-2. **Select a model** — `gpt-4o-mini` is the default (fast & affordable); `gpt-4o` for best quality
+2. **Select a model** — `gemini-3.8-flash` is the default (fast & affordable); select a model available to your Google project
 3. **Ask a question** — Type about astronaut health, or click a sample question
 4. **Review the answer** — The AI provides a structured, knowledge-grounded response
 5. **Check explainability** — Expand the "Explainability Details" panel to see:
@@ -143,7 +143,7 @@ AstronautHealthChatbot/
 ├── config.py             ← Settings, system prompt, sample questions
 │
 ├── requirements.txt      ← Python dependencies
-├── .env.example          ← API key template
+├── env.example          ← API key template
 └── README.md             ← This file
 ```
 
@@ -166,8 +166,8 @@ User Question
          │
          ▼
 ┌─────────────────────┐
-│  OpenAI GPT Model   │ ◄── openai API
-│  (gpt-4o-mini, etc) │     Generates grounded response
+│  Gemini Model   │ ◄── openai API
+│  (gemini-3.8-flash, etc) │     Generates grounded response
 └────────┬────────────┘
          │
          ▼
@@ -185,7 +185,7 @@ User Question
 
 ## 💡 Tips
 
-- **Cost optimization**: Use `gpt-4o-mini` for most queries — it's fast and very affordable
+- **Cost optimization**: Use `gemini-3.8-flash` for most queries — it's fast and very affordable
 - **Better answers**: Lower the temperature (0.2-0.3) for factual, precise responses
 - **Creative exploration**: Raise temperature (0.7-1.0) for broader discussions
 - **Follow-ups**: The chatbot maintains conversation history, so ask follow-up questions naturally
@@ -200,7 +200,7 @@ User Question
 | `ModuleNotFoundError` | Run `pip install -r requirements.txt` again |
 | API key error | Check your `.env` file or enter the key in the sidebar |
 | Port already in use | Kill the existing process or change the port |
-| Slow responses | Switch to `gpt-4o-mini` (faster) or check your internet |
+| Slow responses | Switch to `gemini-3.8-flash` (faster) or check your internet |
 
 ---
 
@@ -208,4 +208,23 @@ User Question
 
 This project is for educational and research purposes.
 
-Built with ❤️ using Streamlit, Gradio, and OpenAI.
+Built with ❤️ using Streamlit, Gradio, and Gemini.
+
+
+## Streamlit Cloud deployment
+
+Use `app_streamlit.py` as the entry point. In app Settings → Secrets, set:
+
+```toml
+GEMINI_API_KEY = "your-gemini-api-key"
+```
+
+Save the secrets and reboot the app after deploying. Do not commit the real key.
+The code uses the `openai` package with Google\'s compatibility endpoint;
+it does not need an OpenAI key or OpenAI credits. Gemini has its own quotas.
+The default model is `gemini-3.8-flash`; model access depends on your Google project.
+If a model is unavailable, update `DEFAULT_MODEL` in `config.py` (or `app.py`
+for the standalone Gradio app) to an available Gemini chat model.
+
+Gradio key inputs are intentionally blank: an entered key overrides the server-side
+`GEMINI_API_KEY`, and the server key is never prefilled into the browser.

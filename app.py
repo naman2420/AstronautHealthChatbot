@@ -17,16 +17,10 @@ from dotenv import load_dotenv
 # ==============================================================================
 load_dotenv()
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-AVAILABLE_MODELS = [
-    "gpt-4o",
-    "gpt-4o-mini",
-    "gpt-4-turbo",
-    "gpt-3.5-turbo",
-]
-
-DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = "gemini-3.8-flash"
+AVAILABLE_MODELS = [DEFAULT_MODEL]
 
 APP_TITLE = "🚀 AstroHealth AI"
 APP_SUBTITLE = "Knowledge-Grounded & Explainable AI for Astronaut Health Monitoring"
@@ -227,10 +221,10 @@ def format_explainability_text(explain_data: dict) -> str:
 # 4. GRADIO INTERFACE
 # ==============================================================================
 def chat(message: str, history: list, api_key: str, model: str, temperature: float):
-    key = api_key.strip() or OPENAI_API_KEY
+    key = api_key.strip() or GEMINI_API_KEY
     if not key:
         return (
-            "⚠️ **Please enter your OpenAI API key** in the settings panel above to start chatting.",
+            "⚠️ **Please enter your Gemini API key** in the settings panel above to start chatting.",
             "No API key provided.",
         )
 
@@ -247,14 +241,16 @@ def chat(message: str, history: list, api_key: str, model: str, temperature: flo
     messages.append({"role": "user", "content": message})
 
     try:
-        client = OpenAI(api_key=key)
+        client = OpenAI(api_key=key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
         response = client.chat.completions.create(
             model=model,
             messages=messages,
             temperature=temperature,
-            max_tokens=2000,
+            max_tokens=8192,
         )
         full_response = response.choices[0].message.content
+        if not full_response:
+            raise ValueError("Gemini returned no text. Please retry or check the model settings.")
         explain = parse_explainability(full_response)
         main_answer = extract_main_response(full_response)
         explain_text = format_explainability_text(explain) if explain else "No explainability data in this response."
@@ -278,7 +274,7 @@ def create_gradio_app():
         with gr.Row():
             with gr.Column(scale=1, min_width=280):
                 gr.Markdown("### ⚙️ Settings")
-                api_key_input = gr.Textbox(label="🔑 OpenAI API Key", placeholder="sk-...", type="password", value=OPENAI_API_KEY or "")
+                api_key_input = gr.Textbox(label="🔑 Gemini API Key", placeholder="Enter your Gemini API key", type="password", value="")
                 model_dropdown = gr.Dropdown(choices=AVAILABLE_MODELS, value=DEFAULT_MODEL, label="🤖 Model")
                 temp_slider = gr.Slider(minimum=0.0, maximum=1.5, value=0.4, step=0.1, label="🌡️ Temperature")
                 gr.Markdown("---")

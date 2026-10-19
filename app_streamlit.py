@@ -8,7 +8,7 @@ Run with:  streamlit run app_streamlit.py
 """
 
 import streamlit as st
-from openai import OpenAI
+from openai import OpenAI, APITimeoutError, APIConnectionError, APIStatusError
 
 from config import (
     APP_ICON, APP_SUBTITLE, APP_TITLE, AVAILABLE_MODELS,
@@ -154,7 +154,7 @@ if "pending_question" not in st.session_state:
 # ─── Sidebar ─────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown(f"## {APP_ICON} AstroHealth AI")
-    st.caption("v1.0 · Knowledge-Grounded & Explainable")
+    st.caption("v1.1 · Gemini · 30-second request timeout")
 
     st.markdown("---")
 
@@ -312,7 +312,7 @@ if user_input:
     with st.chat_message("assistant", avatar="🧑‍🚀"):
         with st.spinner("🛰️ Processing with AstroHealth AI..."):
             try:
-                client = OpenAI(api_key=api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+                client = OpenAI(api_key=api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/", timeout=30.0, max_retries=0)
                 response = client.chat.completions.create(
                     model=model,
                     messages=openai_messages,
@@ -374,5 +374,19 @@ if user_input:
                             if lim:
                                 st.warning(f"⚠️ **Limitations:** {lim}")
 
+            except APITimeoutError:
+                st.error("Gemini did not respond within the request timeout. Please retry once. If it continues, check Google AI Studio or contact the app owner.")
+            except APIConnectionError:
+                st.error("The app could not connect to Gemini. Please retry after a short wait.")
+            except APIStatusError as e:
+                guidance = {
+                    400: "Check that the Gemini API key and model are valid for your Google project.",
+                    401: "Check GEMINI_API_KEY in Streamlit Secrets.",
+                    403: "Your Google project may not have permission to use this key or model.",
+                    404: "This model is unavailable. Check the model ID and your project's model access in Google AI Studio.",
+                    429: "Gemini quota or rate limit reached. Check your project's limits in Google AI Studio.",
+                    503: "Gemini is temporarily unavailable. Please retry later.",
+                }.get(e.status_code, "Check Google AI Studio for the request failure.")
+                st.error(f"Gemini returned HTTP {e.status_code}. {guidance}")
             except Exception as e:
-                st.error(f"❌ Error communicating with Gemini: {str(e)}")
+                st.error(f"❌ Error communicating with Gemini: {str(e).replace(api_key, '[REDACTED]')}")
